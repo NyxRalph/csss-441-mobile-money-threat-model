@@ -1,0 +1,1991 @@
+{
+  "version": "2.1.2",
+  "summary": {
+    "title": "Secure Mobile-Money Payments API",
+    "owner": "Ralph Andy Menz",
+    "description": "CSSS 441 Project 1, Week 1: level-1 DFD, STRIDE-per-element threats, risk ratings and top-five controls.",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [
+      {
+        "name": "Ralph Andy Menz"
+      }
+    ],
+    "diagrams": [
+      {
+        "id": 0,
+        "title": "Level-1 DFD: Mobile-Money Payments API",
+        "diagramType": "STRIDE",
+        "description": "Level-1 data-flow diagram of the secure mobile-money payments API: 4 external entities, 6 processes, 5 data stores, 19 flows and 5 trust boundaries.",
+        "placeholder": "No diagram description provided.",
+        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+        "version": "2.1.2",
+        "cells": [
+          {
+            "position": {
+              "x": 20,
+              "y": 190
+            },
+            "size": {
+              "width": 200,
+              "height": 400
+            },
+            "attrs": {
+              "headerText": {
+                "text": "Internet (untrusted)"
+              }
+            },
+            "visible": true,
+            "shape": "trust-boundary-box",
+            "id": "3bf054ce-b438-562f-8ca6-20b4537e5e22",
+            "zIndex": -1,
+            "data": {
+              "type": "tm.BoundaryBox",
+              "name": "Internet (untrusted)",
+              "description": "Everything outside our control: customer and agent devices, merchant systems and the third-party SMS/email provider.",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            }
+          },
+          {
+            "position": {
+              "x": 20,
+              "y": 20
+            },
+            "size": {
+              "width": 200,
+              "height": 130
+            },
+            "attrs": {
+              "headerText": {
+                "text": "Admin network (allow-listed)"
+              }
+            },
+            "visible": true,
+            "shape": "trust-boundary-box",
+            "id": "770ebec8-578f-5182-bae2-c401ace0929c",
+            "zIndex": -1,
+            "data": {
+              "type": "tm.BoundaryBox",
+              "name": "Admin network (allow-listed)",
+              "description": "Network ranges allowed to reach the admin console. Membership is enforced by firewall rules, not by client-supplied headers.",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            }
+          },
+          {
+            "position": {
+              "x": 290,
+              "y": 20
+            },
+            "size": {
+              "width": 560,
+              "height": 660
+            },
+            "attrs": {
+              "headerText": {
+                "text": "Application zone (Docker network)"
+              }
+            },
+            "visible": true,
+            "shape": "trust-boundary-box",
+            "id": "89b4510a-d900-5765-8be9-bbffaa6b705c",
+            "zIndex": -1,
+            "data": {
+              "type": "tm.BoundaryBox",
+              "name": "Application zone (Docker network)",
+              "description": "API, auth, ledger, webhook, audit and admin services on the private Docker Compose network. Target design: only the edge port is published.",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            }
+          },
+          {
+            "position": {
+              "x": 900,
+              "y": 20
+            },
+            "size": {
+              "width": 260,
+              "height": 430
+            },
+            "attrs": {
+              "headerText": {
+                "text": "Data zone (PostgreSQL, Redis)"
+              }
+            },
+            "visible": true,
+            "shape": "trust-boundary-box",
+            "id": "f9fa2dbd-054b-50f4-a4c7-49ee992d8c79",
+            "zIndex": -1,
+            "data": {
+              "type": "tm.BoundaryBox",
+              "name": "Data zone (PostgreSQL, Redis)",
+              "description": "Databases and cache. Reachable only from the application zone with per-service credentials over TLS.",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            }
+          },
+          {
+            "position": {
+              "x": 900,
+              "y": 500
+            },
+            "size": {
+              "width": 260,
+              "height": 150
+            },
+            "attrs": {
+              "headerText": {
+                "text": "Secrets zone (Vault)"
+              }
+            },
+            "visible": true,
+            "shape": "trust-boundary-box",
+            "id": "5850e9bb-9061-5cb8-a4ed-7451ea41201c",
+            "zIndex": -1,
+            "data": {
+              "type": "tm.BoundaryBox",
+              "name": "Secrets zone (Vault)",
+              "description": "HashiCorp Vault (or environment secrets in the lab). Reachable only with a service identity.",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            }
+          },
+          {
+            "position": {
+              "x": 50,
+              "y": 240
+            },
+            "size": {
+              "width": 140,
+              "height": 70
+            },
+            "visible": true,
+            "id": "5ff69ba6-feb1-50bb-a6e4-5c45e3ad6a56",
+            "zIndex": 1,
+            "shape": "actor",
+            "attrs": {
+              "text": {
+                "text": "Wallet User (customer / agent)"
+              },
+              "body": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Actor",
+              "name": "Wallet User (customer / agent)",
+              "description": "Customer or cash-in/out agent using the wallet API from a mobile or web client.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "6ed14e55-728a-5ce1-921b-52dd30783fff",
+                  "title": "T26 Wallet user denies initiating a transfer",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Repudiation",
+                  "description": "A customer disputes a transfer, and the system cannot show who authorised it from which session. Rating: L3 x I3 = 9 (Medium). Reason: Disputes are routine in mobile money, but a single disputed transfer has bounded impact.",
+                  "mitigation": "Step-up authentication (TOTP or passkey) above a transfer threshold; audit entries tied to session and device; confirmation notification to the user.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 26,
+                  "score": "9"
+                }
+              ],
+              "providesAuthentication": false
+            }
+          },
+          {
+            "position": {
+              "x": 50,
+              "y": 360
+            },
+            "size": {
+              "width": 140,
+              "height": 70
+            },
+            "visible": true,
+            "id": "6d0ee663-da93-5fcb-afcb-11de9093375f",
+            "zIndex": 1,
+            "shape": "actor",
+            "attrs": {
+              "text": {
+                "text": "Merchant"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Actor",
+              "name": "Merchant",
+              "description": "Merchant backend that calls the payments API and receives signed webhooks.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "threats": [],
+              "providesAuthentication": false
+            }
+          },
+          {
+            "position": {
+              "x": 50,
+              "y": 490
+            },
+            "size": {
+              "width": 140,
+              "height": 70
+            },
+            "visible": true,
+            "id": "47e6c2f8-48da-545c-ba85-a629e42ae657",
+            "zIndex": 1,
+            "shape": "actor",
+            "attrs": {
+              "text": {
+                "text": "SMS / Email Provider"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Actor",
+              "name": "SMS / Email Provider",
+              "description": "Third-party service that delivers recovery codes and reset links.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "threats": [],
+              "providesAuthentication": false
+            }
+          },
+          {
+            "position": {
+              "x": 50,
+              "y": 60
+            },
+            "size": {
+              "width": 140,
+              "height": 70
+            },
+            "visible": true,
+            "id": "702e6ec7-39ab-5e0a-b725-67cf5abce279",
+            "zIndex": 1,
+            "shape": "actor",
+            "attrs": {
+              "text": {
+                "text": "Administrator"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Actor",
+              "name": "Administrator",
+              "description": "Operations staff using the admin console from the allow-listed network, with MFA.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "threats": [],
+              "providesAuthentication": false
+            }
+          },
+          {
+            "position": {
+              "x": 320,
+              "y": 70
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "visible": true,
+            "id": "df46d090-aa5d-5df6-9159-ec7927828beb",
+            "zIndex": 1,
+            "shape": "process",
+            "attrs": {
+              "text": {
+                "text": "Admin Console"
+              },
+              "body": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Process",
+              "name": "Admin Console",
+              "description": "Web console for admins. MFA required; reachable only from the allow-listed network.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "fe25a1aa-261c-5479-882d-36c63fe9d888",
+                  "title": "T13 Admin account takeover or CSRF used to freeze wallets, change limits or reverse transactions",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Elevation of privilege",
+                  "description": "Attacker hijacks an admin session or tricks an admin browser into issuing privileged requests. Rating: L2 x I5 = 10 (Medium). Reason: MFA and the allow-list make takeover unlikely, but admin actions have the highest impact.",
+                  "mitigation": "WebAuthn MFA; short sessions; step-up re-authentication for sensitive actions; CSRF tokens and SameSite=Strict; named admin accounts.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 13,
+                  "score": "10"
+                }
+              ],
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "isWebApplication": true,
+              "privilegeLevel": ""
+            }
+          },
+          {
+            "position": {
+              "x": 320,
+              "y": 190
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "visible": true,
+            "id": "ded27f64-fd89-5575-8725-8c587a7d5eb3",
+            "zIndex": 1,
+            "shape": "process",
+            "attrs": {
+              "text": {
+                "text": "API Gateway and Authorization Layer"
+              },
+              "body": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Process",
+              "name": "API Gateway and Authorization Layer",
+              "description": "TLS termination, request-schema validation, session check, rate limiting, security headers and the deny-by-default role plus ownership authorization layer for every route.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "a3dfa3a1-55fb-5fc6-b1bc-748f7ff729a9",
+                  "title": "T27 Privilege escalation through client-controlled role or claims",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Elevation of privilege",
+                  "description": "The server trusts a role, wallet owner or merchant ID supplied by the client instead of its own session record. Rating: L2 x I5 = 10 (Medium). Reason: Server-side sessions make this unlikely, but one trusted client field would give admin or merchant powers.",
+                  "mitigation": "Derive role and identity only from the server-side session; ignore client-supplied role fields; authorization tests for every role against every route.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 27,
+                  "score": "10"
+                }
+              ],
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "isWebApplication": true,
+              "privilegeLevel": ""
+            }
+          },
+          {
+            "position": {
+              "x": 320,
+              "y": 330
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "visible": true,
+            "id": "e17c7f17-57ce-5a39-91b0-786c8adfd60e",
+            "zIndex": 1,
+            "shape": "process",
+            "attrs": {
+              "text": {
+                "text": "Webhook Dispatcher"
+              },
+              "body": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Process",
+              "name": "Webhook Dispatcher",
+              "description": "Builds, signs (HMAC-SHA-256 plus timestamp) and delivers merchant webhooks with retries.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "939fd500-0e44-5185-8459-7a96c0db85fe",
+                  "title": "T24 Slow or unreachable merchant endpoints and retry storms exhaust dispatcher workers",
+                  "status": "Open",
+                  "severity": "Low",
+                  "type": "Denial of service",
+                  "description": "Webhook delivery to slow or dead endpoints ties up workers and delays other merchants. Rating: L3 x I2 = 6 (Low). Reason: Failure is confined to webhook delivery; the ledger and API keep working.",
+                  "mitigation": "Connect and read timeouts; bounded queue with exponential backoff and dead-letter; per-merchant circuit breaker.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 24,
+                  "score": "6"
+                }
+              ],
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "isWebApplication": false,
+              "privilegeLevel": ""
+            }
+          },
+          {
+            "position": {
+              "x": 590,
+              "y": 190
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "visible": true,
+            "id": "5296b1a8-7f83-5af2-8c3d-a78966af2692",
+            "zIndex": 1,
+            "shape": "process",
+            "attrs": {
+              "text": {
+                "text": "Wallet and Ledger Service"
+              },
+              "body": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Process",
+              "name": "Wallet and Ledger Service",
+              "description": "Wallets, balances and transfers on a double-entry ledger, with database transactions, daily limits and idempotency keys.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "f0f62590-59c8-58d7-9083-96e561812099",
+                  "title": "T07 Retried or concurrent requests cause double payment or overdraft",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Tampering",
+                  "description": "TOP FIVE #4. A client retry, or parallel requests fired on purpose, pays twice or spends more than the balance. Rating: L4 x I4 = 16 (High). Reason: Mobile networks force client retries and an attacker can fire parallel requests; each success is direct financial loss.",
+                  "mitigation": "Mandatory idempotency key with a unique constraint; database transactions with row locks (or serialisable isolation); daily limit and balance checked inside the same transaction.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 7,
+                  "score": "16"
+                },
+                {
+                  "id": "9fdf8207-6ee4-56a1-85e9-6f6e45b070a5",
+                  "title": "T08 Business-logic abuse: negative or zero amounts, rounding, currency mix-ups, self-transfers",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Tampering",
+                  "description": "Crafted but schema-valid requests mint funds or reverse a transfer. Rating: L3 x I5 = 15 (High). Reason: The requests look valid to the schema layer, and a ledger-integrity failure would be severe.",
+                  "mitigation": "Integer minor units; amount > 0 and CHECK constraints; double-entry invariant (entries sum to zero) enforced in the database; property-based tests.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 8,
+                  "score": "15"
+                }
+              ],
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "isWebApplication": false,
+              "privilegeLevel": ""
+            }
+          },
+          {
+            "position": {
+              "x": 590,
+              "y": 340
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "visible": true,
+            "id": "1ec6e569-3dd4-51d8-a25b-332292a1c20f",
+            "zIndex": 1,
+            "shape": "process",
+            "attrs": {
+              "text": {
+                "text": "Auth Service"
+              },
+              "body": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Process",
+              "name": "Auth Service",
+              "description": "Registration, login, account recovery, TOTP and passkey (WebAuthn) second factors, session issuance, per-account and per-IP throttling, Argon2id hashing.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "13449300-9f24-5166-ac8f-bf6457e3276d",
+                  "title": "T01 Credential stuffing and password guessing against login",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Spoofing",
+                  "description": "TOP FIVE #3. Attacker replays leaked username/password pairs or guesses passwords to take over a wallet. Rating: L5 x I4 = 20 (High). Reason: Leaked-credential lists are cheap, login is internet-facing, and a taken-over wallet means direct loss of funds.",
+                  "mitigation": "Argon2id hashing; per-account and per-IP throttling; TOTP or passkey second factor; reject breached and common passwords at registration and password change.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 1,
+                  "score": "20"
+                },
+                {
+                  "id": "e23b7c16-9633-5474-8927-c081708cada1",
+                  "title": "T15 User enumeration through login, registration and recovery responses or timing",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Information disclosure",
+                  "description": "Different messages or response times reveal which phone numbers or emails have accounts. Rating: L4 x I2 = 8 (Medium). Reason: Easy to automate, but the impact is limited to learning which accounts exist.",
+                  "mitigation": "Identical generic responses; hash comparison runs even for unknown users; throttling on all three endpoints.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 15,
+                  "score": "8"
+                }
+              ],
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "isWebApplication": false,
+              "privilegeLevel": ""
+            }
+          },
+          {
+            "position": {
+              "x": 590,
+              "y": 480
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "visible": true,
+            "id": "02d319ad-3a22-5a29-a1f9-f556849f36d4",
+            "zIndex": 1,
+            "shape": "process",
+            "attrs": {
+              "text": {
+                "text": "Audit Logger"
+              },
+              "body": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Process",
+              "name": "Audit Logger",
+              "description": "Writes hash-chained audit entries and runs the verifier that detects edits.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "ab8fe66c-e324-5cab-8304-0b91a709d7bf",
+                  "title": "T21 Missing or unattributed audit events let a user or admin deny an action",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Repudiation",
+                  "description": "A dispute cannot be resolved because an event was never logged, or lacks actor, object or trustworthy time. Rating: L3 x I4 = 12 (Medium). Reason: Logging gaps are common, and disputes over transfers are routine in payment systems.",
+                  "mitigation": "Log actor, action, object, request ID and NTP-synchronised timestamp for every authentication, transfer and admin event; test that each event type is written; keep secrets and personal data out of logs.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 21,
+                  "score": "12"
+                }
+              ],
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "isWebApplication": false,
+              "privilegeLevel": ""
+            }
+          },
+          {
+            "position": {
+              "x": 940,
+              "y": 70
+            },
+            "size": {
+              "width": 180,
+              "height": 60
+            },
+            "visible": true,
+            "id": "632170c7-3223-55a9-916c-9c3e00642860",
+            "zIndex": 1,
+            "shape": "store",
+            "attrs": {
+              "text": {
+                "text": "Session and Throttle Cache (Redis)"
+              },
+              "topLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              },
+              "bottomLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Store",
+              "name": "Session and Throttle Cache (Redis)",
+              "description": "Server-side sessions, MFA state and throttle counters.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "threats": [],
+              "isALog": false,
+              "isEncrypted": false,
+              "isSigned": false,
+              "storesCredentials": false,
+              "storesInventory": false
+            }
+          },
+          {
+            "position": {
+              "x": 940,
+              "y": 160
+            },
+            "size": {
+              "width": 180,
+              "height": 60
+            },
+            "visible": true,
+            "id": "c2a0db2e-03fc-5340-8dc8-d7f7e06da16a",
+            "zIndex": 1,
+            "shape": "store",
+            "attrs": {
+              "text": {
+                "text": "Accounts and Credentials DB (PostgreSQL)"
+              },
+              "topLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              },
+              "bottomLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Store",
+              "name": "Accounts and Credentials DB (PostgreSQL)",
+              "description": "Accounts, Argon2id password hashes, encrypted TOTP seeds, WebAuthn credentials, merchant API-key hashes.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "threats": [],
+              "isALog": false,
+              "isEncrypted": true,
+              "isSigned": false,
+              "storesCredentials": true,
+              "storesInventory": false
+            }
+          },
+          {
+            "position": {
+              "x": 940,
+              "y": 250
+            },
+            "size": {
+              "width": 180,
+              "height": 60
+            },
+            "visible": true,
+            "id": "dc0056b2-368a-569e-9d86-d1bfb6c47ad3",
+            "zIndex": 1,
+            "shape": "store",
+            "attrs": {
+              "text": {
+                "text": "Ledger DB (PostgreSQL)"
+              },
+              "topLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              },
+              "bottomLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Store",
+              "name": "Ledger DB (PostgreSQL)",
+              "description": "Double-entry ledger entries, balances, idempotency keys and daily-limit counters.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "threats": [],
+              "isALog": false,
+              "isEncrypted": false,
+              "isSigned": false,
+              "storesCredentials": false,
+              "storesInventory": false
+            }
+          },
+          {
+            "position": {
+              "x": 940,
+              "y": 340
+            },
+            "size": {
+              "width": 180,
+              "height": 60
+            },
+            "visible": true,
+            "id": "0f3bf3b5-06f6-50d9-9a56-63a475975cf4",
+            "zIndex": 1,
+            "shape": "store",
+            "attrs": {
+              "text": {
+                "text": "Audit Log Store (hash-chained)"
+              },
+              "topLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              },
+              "bottomLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Store",
+              "name": "Audit Log Store (hash-chained)",
+              "description": "Append-only audit entries; each entry carries the hash of the previous one.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "threats": [],
+              "isALog": true,
+              "isEncrypted": false,
+              "isSigned": true,
+              "storesCredentials": false,
+              "storesInventory": false
+            }
+          },
+          {
+            "position": {
+              "x": 940,
+              "y": 550
+            },
+            "size": {
+              "width": 180,
+              "height": 60
+            },
+            "visible": true,
+            "id": "c415308e-276f-5439-afed-8a29008af712",
+            "zIndex": 1,
+            "shape": "store",
+            "attrs": {
+              "text": {
+                "text": "Secrets Vault"
+              },
+              "topLine": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              },
+              "bottomLine": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "data": {
+              "type": "tm.Store",
+              "name": "Secrets Vault",
+              "description": "DB credentials, webhook signing secrets, session-signing and TOTP-encryption keys.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "threats": [
+                {
+                  "id": "d5e990d8-e4c0-5025-9bb0-e2f66ed96727",
+                  "title": "T25 Vault outage stops key retrieval and halts payments",
+                  "status": "Open",
+                  "severity": "Low",
+                  "type": "Denial of service",
+                  "description": "Services cannot fetch keys or credentials and fail, or fail open. Rating: L2 x I3 = 6 (Low). Reason: Low likelihood in a single-node lab, and services can cache keys in memory.",
+                  "mitigation": "Fetch keys at startup and cache in memory with a TTL; documented restart procedure; fail closed and alert.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 25,
+                  "score": "6"
+                }
+              ],
+              "isALog": false,
+              "isEncrypted": false,
+              "isSigned": false,
+              "storesCredentials": true,
+              "storesInventory": false
+            }
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": "classic"
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Wallet API requests and responses",
+              "description": "Wallet User (customer / agent) to API Gateway and Authorization Layer. Crosses a trust boundary.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isBidirectional": true,
+              "isEncrypted": true,
+              "isPublicNetwork": true,
+              "protocol": "HTTPS",
+              "threats": [
+                {
+                  "id": "149567c7-e83f-5c1f-947f-0f1905bc4f01",
+                  "title": "T02 Broken object-level authorization on wallet and transaction routes",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Elevation of privilege",
+                  "description": "TOP FIVE #1. A logged-in user changes a wallet or transaction ID, or calls a merchant, agent or admin route, to read or move another account's funds. Rating: L4 x I5 = 20 (High). Reason: Most common API flaw, trivial to try with an intercepting proxy, and the result is direct theft and data exposure.",
+                  "mitigation": "Deny-by-default authorization layer: role check plus ownership check on every wallet and transaction route, with one negative test per route in CI.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 2,
+                  "score": "20"
+                },
+                {
+                  "id": "5875c04a-1d9e-5028-83f2-e409039f5b78",
+                  "title": "T03 Tampered request fields and injection payloads",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Tampering",
+                  "description": "TOP FIVE #5. Attacker alters amount, recipient, currency or IDs, adds unexpected fields (mass assignment), or sends SQL/script payloads and oversized bodies. Rating: L4 x I4 = 16 (High). Reason: Every endpoint takes attacker-controlled input from a public network, and one validation gap can change a transfer.",
+                  "mitigation": "Strict request schemas that reject unknown fields (Pydantic/Zod); parameterised queries only; output encoding; Semgrep in CI.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 3,
+                  "score": "16"
+                },
+                {
+                  "id": "14c32910-5dd7-533f-9d72-3dbaf6e8c4e9",
+                  "title": "T04 Session tokens or financial data exposed in transit or through verbose errors",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Information disclosure",
+                  "description": "Tokens or balances are read from network traffic, or leak through stack traces, headers, URLs or logs. Rating: L3 x I4 = 12 (Medium). Reason: TLS 1.3 makes passive interception hard; the realistic exposure is misconfiguration, stack traces and weak cookie flags.",
+                  "mitigation": "TLS 1.3 with HSTS; Secure, HttpOnly and SameSite cookies; generic error messages; security headers; no tokens or personal data in URLs or logs.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 4,
+                  "score": "12"
+                },
+                {
+                  "id": "a3a1f053-23fd-5628-80cd-fae5d0def75d",
+                  "title": "T05 Request flooding and expensive queries",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Denial of service",
+                  "description": "Attacker floods the API or triggers costly queries so legitimate users cannot transact. Rating: L4 x I3 = 12 (Medium). Reason: Costs the attacker nothing, but the impact is availability only, not loss of funds.",
+                  "mitigation": "Per-IP and per-account rate limits at the edge; body-size limits; timeouts; pagination caps; container resource limits.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 5,
+                  "score": "12"
+                }
+              ]
+            },
+            "id": "980edab0-a868-59cd-a587-d9fbec195156",
+            "labels": [
+              "Wallet API requests and responses"
+            ],
+            "source": {
+              "cell": "5ff69ba6-feb1-50bb-a6e4-5c45e3ad6a56"
+            },
+            "target": {
+              "cell": "ded27f64-fd89-5575-8725-8c587a7d5eb3"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": "classic"
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Merchant API requests and responses",
+              "description": "Merchant to API Gateway and Authorization Layer. Crosses a trust boundary.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isBidirectional": true,
+              "isEncrypted": true,
+              "isPublicNetwork": true,
+              "protocol": "HTTPS",
+              "threats": [
+                {
+                  "id": "db70f875-c16e-58d8-8f96-2c7a34a2f226",
+                  "title": "T06 Stolen or leaked merchant API key",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Spoofing",
+                  "description": "A leaked key is used to create payments or refunds, or to read a merchant's transactions. Rating: L3 x I4 = 12 (Medium). Reason: Merchants commit keys to repositories or log them; scoping and revocation limit the blast radius, which keeps likelihood moderate.",
+                  "mitigation": "Keys stored hashed; scoped per merchant; rotation and revocation; optional IP allow-list; alerts on unusual volume.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 6,
+                  "score": "12"
+                }
+              ]
+            },
+            "id": "15fc5a03-490d-566f-9408-178cc77c7099",
+            "labels": [
+              "Merchant API requests and responses"
+            ],
+            "source": {
+              "cell": "6d0ee663-da93-5fcb-afcb-11de9093375f"
+            },
+            "target": {
+              "cell": "ded27f64-fd89-5575-8725-8c587a7d5eb3"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Signed webhook callbacks",
+              "description": "Webhook Dispatcher to Merchant. Crosses a trust boundary.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": true,
+              "protocol": "HTTPS",
+              "threats": [
+                {
+                  "id": "5994686c-bcbd-59da-9c4b-939064879b0a",
+                  "title": "T09 Forged webhook claiming a payment succeeded",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Spoofing",
+                  "description": "Attacker posts a fake 'payment succeeded' callback to a merchant endpoint. Rating: L3 x I5 = 15 (High). Reason: Merchants release goods on webhooks, and a forger needs no access to our systems, only the merchant's URL.",
+                  "mitigation": "HMAC-SHA-256 over timestamp plus body with a per-merchant secret; constant-time verification in the reference receiver.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 9,
+                  "score": "15"
+                },
+                {
+                  "id": "5449a593-03b6-572e-9f82-16b6e5910fbd",
+                  "title": "T10 Replay of a captured, validly signed webhook",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Tampering",
+                  "description": "A genuine webhook is captured and sent again later to trigger a second fulfilment. Rating: L3 x I4 = 12 (Medium). Reason: Capturing a webhook needs a vantage point such as merchant logs or a proxy, but replaying it then needs no secret.",
+                  "mitigation": "Signed timestamp with a 5-minute tolerance; unique event-ID deduplication at the receiver; TLS only.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 10,
+                  "score": "12"
+                },
+                {
+                  "id": "a2f9fd00-1ce2-505f-b739-0199acf63cd4",
+                  "title": "T11 SSRF through a merchant-supplied webhook URL",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Information disclosure",
+                  "description": "A merchant registers a URL pointing at internal hosts or cloud metadata, so the dispatcher reaches and leaks internal data. Rating: L3 x I4 = 12 (Medium). Reason: Any registered merchant controls the URL, and impact depends on what the dispatcher can reach internally.",
+                  "mitigation": "HTTPS only; resolve the host and block private, loopback and link-local ranges; no redirects; egress firewall for the dispatcher; never return response bodies to the merchant.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 11,
+                  "score": "12"
+                }
+              ]
+            },
+            "id": "a9da1b90-298c-5abe-a411-f87b77344cb5",
+            "labels": [
+              "Signed webhook callbacks"
+            ],
+            "source": {
+              "cell": "e17c7f17-57ce-5a39-91b0-786c8adfd60e"
+            },
+            "target": {
+              "cell": "6d0ee663-da93-5fcb-afcb-11de9093375f"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": "classic"
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Admin console session",
+              "description": "Administrator to Admin Console. Crosses a trust boundary.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isBidirectional": true,
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "protocol": "HTTPS",
+              "threats": [
+                {
+                  "id": "20a519ee-341f-536c-a39c-d0a48099b3ba",
+                  "title": "T12 Admin allow-list bypass via spoofed X-Forwarded-For or a foothold on the allow-listed network",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Spoofing",
+                  "description": "Attacker forges a client-IP header, or compromises a host inside the allowed range, to reach the admin console. Rating: L3 x I5 = 15 (High). Reason: Header-trust mistakes are common and easy to test, and admin access is total.",
+                  "mitigation": "Enforce the allow-list at the network firewall and from the proxy's verified peer address, never from client-supplied headers; MFA still required; test with a spoofed header.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 12,
+                  "score": "15"
+                }
+              ]
+            },
+            "id": "29d1e075-576a-5313-9861-89c830159f98",
+            "labels": [
+              "Admin console session"
+            ],
+            "source": {
+              "cell": "702e6ec7-39ab-5e0a-b725-67cf5abce279"
+            },
+            "target": {
+              "cell": "df46d090-aa5d-5df6-9159-ec7927828beb"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Admin operations via API",
+              "description": "Admin Console to API Gateway and Authorization Layer. Stays inside one trust zone.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "protocol": "HTTPS",
+              "threats": []
+            },
+            "id": "0343dcc4-12eb-5033-9148-7c2b85c19c3b",
+            "labels": [
+              "Admin operations via API"
+            ],
+            "source": {
+              "cell": "df46d090-aa5d-5df6-9159-ec7927828beb"
+            },
+            "target": {
+              "cell": "ded27f64-fd89-5575-8725-8c587a7d5eb3"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Register, login, recovery and MFA requests",
+              "description": "API Gateway and Authorization Layer to Auth Service. Stays inside one trust zone.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "protocol": "HTTPS",
+              "threats": []
+            },
+            "id": "04418e02-db96-5da1-87ce-804fcd6d2ac4",
+            "labels": [
+              "Register, login, recovery and MFA requests"
+            ],
+            "source": {
+              "cell": "ded27f64-fd89-5575-8725-8c587a7d5eb3"
+            },
+            "target": {
+              "cell": "1ec6e569-3dd4-51d8-a25b-332292a1c20f"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Authorised wallet and transfer commands",
+              "description": "API Gateway and Authorization Layer to Wallet and Ledger Service. Stays inside one trust zone.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "protocol": "HTTPS",
+              "threats": []
+            },
+            "id": "8518168d-2cb3-52d7-85b3-5d0454a0f92f",
+            "labels": [
+              "Authorised wallet and transfer commands"
+            ],
+            "source": {
+              "cell": "ded27f64-fd89-5575-8725-8c587a7d5eb3"
+            },
+            "target": {
+              "cell": "5296b1a8-7f83-5af2-8c3d-a78966af2692"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Payment events for webhook dispatch",
+              "description": "Wallet and Ledger Service to Webhook Dispatcher. Stays inside one trust zone.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "Internal queue",
+              "threats": []
+            },
+            "id": "b8dc9df1-9497-5f5e-9a03-f207ce12a169",
+            "labels": [
+              "Payment events for webhook dispatch"
+            ],
+            "source": {
+              "cell": "5296b1a8-7f83-5af2-8c3d-a78966af2692"
+            },
+            "target": {
+              "cell": "e17c7f17-57ce-5a39-91b0-786c8adfd60e"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Recovery code or reset link",
+              "description": "Auth Service to SMS / Email Provider. Crosses a trust boundary.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": true,
+              "protocol": "HTTPS",
+              "threats": [
+                {
+                  "id": "46ed0f9b-cb9e-518e-85ec-824ff889e2cd",
+                  "title": "T14 Account takeover through the recovery channel",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Spoofing",
+                  "description": "TOP FIVE #2. Attacker uses SIM swap or an intercepted code, a guessable or reusable reset token, or a recovery flow that skips the second factor. Rating: L4 x I5 = 20 (High). Reason: Recovery is usually the weakest path into an account, and SMS delivery is a known target for SIM-swap fraud.",
+                  "mitigation": "Random 128-bit single-use token stored hashed, 15-minute expiry; recovery never bypasses MFA (or triggers a cooling-off period and notification); throttled attempts; identical responses for known and unknown accounts.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 14,
+                  "score": "20"
+                }
+              ]
+            },
+            "id": "df7e1f41-d580-507e-97bb-f27f90097361",
+            "labels": [
+              "Recovery code or reset link"
+            ],
+            "source": {
+              "cell": "1ec6e569-3dd4-51d8-a25b-332292a1c20f"
+            },
+            "target": {
+              "cell": "47e6c2f8-48da-545c-ba85-a629e42ae657"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": "classic"
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Credential and profile reads and writes",
+              "description": "Auth Service to Accounts and Credentials DB (PostgreSQL). Crosses a trust boundary.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isBidirectional": true,
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "protocol": "PostgreSQL over TLS",
+              "threats": [
+                {
+                  "id": "be658b03-1b2f-59d8-9044-eea5847d7ffb",
+                  "title": "T16 Credential database dump exposes password hashes and TOTP seeds",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Information disclosure",
+                  "description": "SQL injection, a stolen backup or an over-privileged role exposes credential data. Rating: L2 x I5 = 10 (Medium). Reason: Parameterised queries and network isolation lower the odds, but exposure enables offline cracking and MFA bypass.",
+                  "mitigation": "Argon2id with benchmarked parameters; TOTP secrets encrypted with a key held in Vault, not in the database; least-privilege DB role; TLS to PostgreSQL; encrypted backups.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 16,
+                  "score": "10"
+                }
+              ]
+            },
+            "id": "d8eea8a4-857d-5e20-a00c-67aecab73d29",
+            "labels": [
+              "Credential and profile reads and writes"
+            ],
+            "source": {
+              "cell": "1ec6e569-3dd4-51d8-a25b-332292a1c20f"
+            },
+            "target": {
+              "cell": "c2a0db2e-03fc-5340-8dc8-d7f7e06da16a"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": "classic"
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Session, MFA state and throttle counters",
+              "description": "Auth Service to Session and Throttle Cache (Redis). Crosses a trust boundary.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isBidirectional": true,
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "protocol": "Redis over TLS",
+              "threats": [
+                {
+                  "id": "1dc308b2-76e6-5adf-a6f4-c59a67e0a589",
+                  "title": "T17 Session theft or fixation through an exposed Redis or a pre-set session ID",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Spoofing",
+                  "description": "Attacker reads sessions from an open Redis, or forces a known session ID onto a victim. Rating: L3 x I4 = 12 (Medium). Reason: Redis is unauthenticated by default and Compose files often publish its port.",
+                  "mitigation": "Redis ACL and TLS with no published port; new session ID at login; high-entropy IDs stored hashed; short idle and absolute timeouts.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 17,
+                  "score": "12"
+                }
+              ]
+            },
+            "id": "2a89b438-af1a-5a91-bd89-02c2bda0e135",
+            "labels": [
+              "Session, MFA state and throttle counters"
+            ],
+            "source": {
+              "cell": "1ec6e569-3dd4-51d8-a25b-332292a1c20f"
+            },
+            "target": {
+              "cell": "632170c7-3223-55a9-916c-9c3e00642860"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": "classic"
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Session validation and rate-limit counters",
+              "description": "API Gateway and Authorization Layer to Session and Throttle Cache (Redis). Crosses a trust boundary.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isBidirectional": true,
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "protocol": "Redis over TLS",
+              "threats": [
+                {
+                  "id": "0f660583-6f44-5b6a-b139-f46669eee01c",
+                  "title": "T18 Throttle counters flushed or unavailable, so rate limiting fails open",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Tampering",
+                  "description": "Counters are deleted, evicted or unreachable and the API stops limiting login attempts. Rating: L2 x I4 = 8 (Medium). Reason: Needs a Redis fault or access, but fail-open is a common default.",
+                  "mitigation": "Fail closed when the counter store is unreachable; no-eviction policy for counter keys; alert on Redis errors.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 18,
+                  "score": "8"
+                }
+              ]
+            },
+            "id": "e250418d-f4ab-5ba7-a2d3-a5e1ee83ec98",
+            "labels": [
+              "Session validation and rate-limit counters"
+            ],
+            "source": {
+              "cell": "ded27f64-fd89-5575-8725-8c587a7d5eb3"
+            },
+            "target": {
+              "cell": "632170c7-3223-55a9-916c-9c3e00642860"
+            },
+            "vertices": [
+              {
+                "x": 530,
+                "y": 150
+              },
+              {
+                "x": 880,
+                "y": 100
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": "classic"
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Ledger transactions and idempotency keys",
+              "description": "Wallet and Ledger Service to Ledger DB (PostgreSQL). Crosses a trust boundary.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isBidirectional": true,
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "protocol": "PostgreSQL over TLS",
+              "threats": [
+                {
+                  "id": "7dee47f4-bd04-5c60-99e5-8e79fb06e1e0",
+                  "title": "T19 Direct modification of ledger rows by a compromised credential or insider",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Tampering",
+                  "description": "Someone with the application's DB credential updates or deletes ledger entries to move or hide money. Rating: L2 x I5 = 10 (Medium). Reason: Needs a privileged credential, but the ledger is the system of record.",
+                  "mitigation": "App DB role has INSERT-only on ledger entries; corrections as reversing entries; daily reconciliation (entries sum to zero, balances match entries); database audit logging.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 19,
+                  "score": "10"
+                }
+              ]
+            },
+            "id": "ee4ee73b-bee8-5fe0-9058-559f66cefd29",
+            "labels": [
+              "Ledger transactions and idempotency keys"
+            ],
+            "source": {
+              "cell": "5296b1a8-7f83-5af2-8c3d-a78966af2692"
+            },
+            "target": {
+              "cell": "dc0056b2-368a-569e-9d86-d1bfb6c47ad3"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Access-control decisions and admin actions",
+              "description": "API Gateway and Authorization Layer to Audit Logger. Stays inside one trust zone.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "Internal call",
+              "threats": []
+            },
+            "id": "a0c57c0b-a9d4-5a4d-8007-e6adccb9ad1a",
+            "labels": [
+              "Access-control decisions and admin actions"
+            ],
+            "source": {
+              "cell": "ded27f64-fd89-5575-8725-8c587a7d5eb3"
+            },
+            "target": {
+              "cell": "02d319ad-3a22-5a29-a1f9-f556849f36d4"
+            },
+            "vertices": [
+              {
+                "x": 520,
+                "y": 260
+              },
+              {
+                "x": 520,
+                "y": 520
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Authentication events",
+              "description": "Auth Service to Audit Logger. Stays inside one trust zone.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "Internal call",
+              "threats": []
+            },
+            "id": "7e619709-9bf5-5ec7-a41c-8f9a92d970a8",
+            "labels": [
+              "Authentication events"
+            ],
+            "source": {
+              "cell": "1ec6e569-3dd4-51d8-a25b-332292a1c20f"
+            },
+            "target": {
+              "cell": "02d319ad-3a22-5a29-a1f9-f556849f36d4"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Financial events",
+              "description": "Wallet and Ledger Service to Audit Logger. Stays inside one trust zone.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "Internal call",
+              "threats": []
+            },
+            "id": "81e1483e-d03c-5a72-bf1b-1e8ed27ca50d",
+            "labels": [
+              "Financial events"
+            ],
+            "source": {
+              "cell": "5296b1a8-7f83-5af2-8c3d-a78966af2692"
+            },
+            "target": {
+              "cell": "02d319ad-3a22-5a29-a1f9-f556849f36d4"
+            },
+            "vertices": [
+              {
+                "x": 790,
+                "y": 230
+              },
+              {
+                "x": 790,
+                "y": 520
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Hash-chained audit entries",
+              "description": "Audit Logger to Audit Log Store (hash-chained). Crosses a trust boundary.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "protocol": "PostgreSQL over TLS",
+              "threats": [
+                {
+                  "id": "b2d37cf6-34f6-5c8c-a82a-77ac0574e21f",
+                  "title": "T20 Audit entries edited or deleted to hide fraud",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Tampering",
+                  "description": "Attacker with database write access alters or removes audit rows. Rating: L2 x I4 = 8 (Medium). Reason: Needs database write access; the hash chain makes edits detectable, but a full rewrite is only caught with an external anchor.",
+                  "mitigation": "Hash chain plus scheduled verifier; append-only DB role; periodically export the head hash off-host.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 20,
+                  "score": "8"
+                }
+              ]
+            },
+            "id": "55370bac-7910-5ae3-876c-d82e99be44e0",
+            "labels": [
+              "Hash-chained audit entries"
+            ],
+            "source": {
+              "cell": "02d319ad-3a22-5a29-a1f9-f556849f36d4"
+            },
+            "target": {
+              "cell": "0f3bf3b5-06f6-50d9-9a56-63a475975cf4"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": "classic"
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Webhook signing secrets",
+              "description": "Webhook Dispatcher to Secrets Vault. Crosses a trust boundary.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isBidirectional": true,
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "protocol": "HTTPS (Vault API)",
+              "threats": [
+                {
+                  "id": "1399b636-cd70-51fa-9897-c35004bc26f7",
+                  "title": "T22 Webhook signing secrets leaked through env vars, logs, source or an over-broad Vault token",
+                  "status": "Open",
+                  "severity": "High",
+                  "type": "Information disclosure",
+                  "description": "Secrets that sign webhooks are exposed, letting an attacker forge valid callbacks for that merchant. Rating: L3 x I5 = 15 (High). Reason: A leaked secret forges valid webhooks, and configuration and logs leak secrets routinely.",
+                  "mitigation": "Secrets from Vault using short-lived AppRole tokens; per-merchant secrets with rotation; gitleaks in CI; log redaction.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 22,
+                  "score": "15"
+                }
+              ]
+            },
+            "id": "e1a1da95-2407-5582-91b3-f38b81dc7032",
+            "labels": [
+              "Webhook signing secrets"
+            ],
+            "source": {
+              "cell": "e17c7f17-57ce-5a39-91b0-786c8adfd60e"
+            },
+            "target": {
+              "cell": "c415308e-276f-5439-afed-8a29008af712"
+            },
+            "vertices": [
+              {
+                "x": 545,
+                "y": 420
+              },
+              {
+                "x": 545,
+                "y": 600
+              },
+              {
+                "x": 880,
+                "y": 600
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "red",
+                "strokeWidth": 1.5,
+                "targetMarker": {
+                  "name": "classic"
+                },
+                "sourceMarker": {
+                  "name": "classic"
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 10,
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "Session-signing and TOTP-encryption keys",
+              "description": "Auth Service to Secrets Vault. Crosses a trust boundary.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isBidirectional": true,
+              "isEncrypted": true,
+              "isPublicNetwork": false,
+              "protocol": "HTTPS (Vault API)",
+              "threats": [
+                {
+                  "id": "d3d3fb56-9193-5100-8569-2de96a1210e4",
+                  "title": "T23 Rogue service or stolen token obtains session-signing and TOTP-encryption keys",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Spoofing",
+                  "description": "An attacker with a foothold in the application network presents a stolen token to Vault. Rating: L2 x I5 = 10 (Medium). Reason: Needs a foothold inside the application network, but the keys protect every session and every TOTP seed.",
+                  "mitigation": "Per-service Vault policies; short token TTL; Vault audit device; network policy so only the auth service can reach the key path.",
+                  "modelType": "STRIDE",
+                  "new": false,
+                  "number": 23,
+                  "score": "10"
+                }
+              ]
+            },
+            "id": "179c45a6-20e1-5d6e-a490-9a274a20596a",
+            "labels": [
+              "Session-signing and TOTP-encryption keys"
+            ],
+            "source": {
+              "cell": "1ec6e569-3dd4-51d8-a25b-332292a1c20f"
+            },
+            "target": {
+              "cell": "c415308e-276f-5439-afed-8a29008af712"
+            },
+            "vertices": [
+              {
+                "x": 800,
+                "y": 400
+              },
+              {
+                "x": 880,
+                "y": 560
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "diagramTop": 1,
+    "reviewer": "",
+    "threatTop": 27
+  }
+}
